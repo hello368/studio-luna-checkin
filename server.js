@@ -1,8 +1,8 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
+// FILE SYSTEM LOGIC MOVED TO LOCAL-ONLY BLOCK
+// On Vercel, we cannot write to disk at startup.
 const fs = require('fs');
 const path = require('path');
+// ... other imports ...
 const QRCode = require('qrcode');
 const os = require('os');
 
@@ -16,12 +16,18 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Ensure DB exists
-if (!fs.existsSync(DB_DIR)) {
-    fs.mkdirSync(DB_DIR, { recursive: true });
-}
-if (!fs.existsSync(DB_FILE)) {
-    fs.writeFileSync(DB_FILE, '[]');
+// Ensure DB exists (Local Mode Only)
+if (require.main === module) {
+    if (!fs.existsSync(DB_DIR)) {
+        try {
+            fs.mkdirSync(DB_DIR, { recursive: true });
+            if (!fs.existsSync(DB_FILE)) {
+                fs.writeFileSync(DB_FILE, '[]');
+            }
+        } catch (err) {
+            console.warn("Could not create local DB file (expected behavior on Vercel/ReadOnly envs).");
+        }
+    }
 }
 
 // Helper: Get IP
