@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard | Studio Luna Body Sculpting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <style>
+        .gold-text {
+            color: #D4AF37;
+        }
+
+        .gold-bg {
+            background-color: #D4AF37;
+        }
+
+        .fc-event {
+            cursor: pointer;
+        }
+
+        .fc-toolbar-title {
+            font-size: 1.5em !important;
+        }
+
+        .fc-button-primary {
+            background-color: #374151 !important;
+            border-color: #374151 !important;
+        }
+
+        .fc-button-primary:hover {
+            background-color: #1F2937 !important;
+            border-color: #1F2937 !important;
+        }
+
+        .fc-button-active {
+            background-color: #D4AF37 !important;
+            border-color: #D4AF37 !important;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-lg shadow">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Check-in Dashboard</h1>
+                <p class="text-gray-500">Studio Luna Body Sculpting Administrative Console</p>
+            </div>
+            <div class="space-x-2">
+                <button onclick="switchView('calendar')" id="btn-calendar"
+                    class="bg-gray-800 text-white font-bold py-2 px-4 rounded shadow transition">
+                    Calendar View
+                </button>
+                <button onclick="switchView('list')" id="btn-list"
+                    class="bg-white border text-gray-700 hover:bg-gray-50 font-bold py-2 px-4 rounded shadow transition">
+                    List View
+                </button>
+                <button onclick="toggleRefresh()" id="btn-refresh" class="ml-4 text-sm text-gray-500 underline">
+                    Auto-Refresh: ON
+                </button>
+            </div>
+        </header>
+
+        <!-- VIEW: CALENDAR -->
+        <div id="view-calendar" class="bg-white shadow rounded-lg p-6 mb-8">
+            <div id="calendar"></div>
+        </div>
+
+        <!-- VIEW: LIST (Hidden by default or toggled) -->
+        <div id="view-list" class="hidden bg-white shadow overflow-hidden sm:rounded-lg">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Client Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Treatment</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Contact</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body" class="bg-white divide-y divide-gray-200">
+                    <!-- Rows injected via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- DETAILS MODAL -->
+    <div id="details-modal"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="relative bg-white rounded-xl shadow-2xl max-w-lg w-full p-8 m-4">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-start mb-6 border-b pb-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800" id="modal-name">Client Name</h2>
+                    <p class="text-sm text-gray-500" id="modal-time">Start Time</p>
+                </div>
+                <button onclick="closeModal()"
+                    class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-xs font-uppercase text-gray-400 font-bold">TREATMENT</p>
+                        <p class="text-lg font-medium text-gray-800" id="modal-treatment">Botox</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-uppercase text-gray-400 font-bold">CONTACT</p>
+                        <p class="text-sm text-gray-800"><span id="modal-phone"></span></p>
+                        <p class="text-sm text-gray-600"><span id="modal-email"></span></p>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-xs font-uppercase text-gray-400 font-bold mb-1">AGREED CONSENT TEXT</p>
+                    <div class="bg-gray-50 border rounded p-3 text-xs text-gray-600 italic h-24 overflow-y-auto"
+                        id="modal-consent">
+                        <!-- Consent Text -->
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-xs font-uppercase text-gray-400 font-bold mb-2">SIGNED CONSENT</p>
+                    <div class="border-2 border-dashed border-gray-200 rounded-lg p-2 bg-gray-50 flex justify-center">
+                        <img id="modal-signature" src="" class="max-h-32 object-contain" alt="Signature">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-8 flex justify-end space-x-3">
+                <button onclick="closeModal()"
+                    class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition">Close</button>
+                <button class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition shadow">Print /
+                    Export</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let calendar;
+        let allVisits = [];
+        let refreshInterval;
+        let isAutoRefresh = true;
+
+        // --- COLORS FOR TREATMENTS ---
+        const treatmentColors = {
+            'Botox / Dysport': '#8B5CF6', // Purple
+            'Dermal Fillers': '#EC4899', // Pink
+            'Skin Tightening Facial': '#F59E0B', // Amber
+            'Microneedling RF': '#EF4444', // Red
+            'Co2 Laser For Acne Treatment': '#DC2626', // Dark Red
+            'Co2 Laser Skin Rejuvenation': '#B91C1C', // Darker Red
+            'PRP Treatment': '#DC2626', // Red
+            'Body Contouring Treatment': '#10B981', // Emerald
+            'Ultra Sound HIFU Treatment': '#3B82F6', // Blue
+            'Consultation': '#6B7280', // Gray
+            'Other': '#9CA3AF' // Light Gray
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                height: 'auto',
+                events: [], // Loaded dynamically
+                eventClick: function (info) {
+                    showDetails(info.event.extendedProps);
+                }
+            });
+            calendar.render();
+
+            loadData();
+            refreshInterval = setInterval(() => {
+                if (isAutoRefresh) loadData();
+            }, 5000);
+        });
+
+        async function loadData() {
+            try {
+                const response = await fetch('/api/visits');
+                allVisits = await response.json();
+
+                updateCalendar(allVisits);
+                updateList(allVisits);
+            } catch (e) {
+                console.error("Fetch failed", e);
+            }
+        }
+
+        function updateCalendar(visits) {
+            const events = visits.map(v => ({
+                title: `${v.name} (${v.treatment})`,
+                start: v.timestamp,
+                backgroundColor: treatmentColors[v.treatment] || '#6B7280',
+                borderColor: treatmentColors[v.treatment] || '#6B7280',
+                extendedProps: v // Store full object for modal
+            }));
+
+            // Smart update: only refetch if count changed to avoid flickering? 
+            // FullCalendar handles this well usually.
+            calendar.removeAllEvents();
+            calendar.addEventSource(events);
+        }
+
+        function updateList(visits) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            visits.forEach(visit => {
+                const date = new Date(visit.timestamp);
+                const dateString = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50 transition cursor-pointer';
+                tr.onclick = () => showDetails(visit);
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${dateString}</td>
+                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">${visit.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs rounded-full text-white" style="background-color: ${treatmentColors[visit.treatment] || '#999'}">
+                            ${visit.treatment}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${visit.phone}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-blue-600">
+                        View Details
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- MODAL LOGIC ---
+        function showDetails(visit) {
+            document.getElementById('modal-name').innerText = visit.name;
+            document.getElementById('modal-time').innerText = new Date(visit.timestamp).toLocaleString();
+            document.getElementById('modal-treatment').innerText = visit.treatment;
+            document.getElementById('modal-phone').innerText = visit.phone;
+            document.getElementById('modal-email').innerText = visit.email || 'No email';
+            document.getElementById('modal-consent').innerText = visit.consentText || "Standard consent form (text not saved for older records).";
+            document.getElementById('modal-signature').src = visit.signature;
+
+            document.getElementById('details-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('details-modal').classList.add('hidden');
+        }
+
+        // --- DASHBOARD CONTROLS ---
+        function switchView(viewName) {
+            const calDiv = document.getElementById('view-calendar');
+            const listDiv = document.getElementById('view-list');
+            const btnCal = document.getElementById('btn-calendar');
+            const btnList = document.getElementById('btn-list');
+
+            if (viewName === 'calendar') {
+                calDiv.classList.remove('hidden');
+                listDiv.classList.add('hidden');
+
+                // Style Active Button
+                btnCal.classList.add('bg-gray-800', 'text-white');
+                btnCal.classList.remove('bg-white', 'text-gray-700', 'border');
+
+                btnList.classList.add('bg-white', 'text-gray-700', 'border');
+                btnList.classList.remove('bg-gray-800', 'text-white');
+
+                // Refresh calendar layout in case it was hidden
+                setTimeout(() => calendar.updateSize(), 100);
+
+            } else {
+                calDiv.classList.add('hidden');
+                listDiv.classList.remove('hidden');
+
+                // Style Active Button
+                btnList.classList.add('bg-gray-800', 'text-white');
+                btnList.classList.remove('bg-white', 'text-gray-700', 'border');
+
+                btnCal.classList.add('bg-white', 'text-gray-700', 'border');
+                btnCal.classList.remove('bg-gray-800', 'text-white');
+            }
+        }
+
+        function toggleRefresh() {
+            isAutoRefresh = !isAutoRefresh;
+            document.getElementById('btn-refresh').innerText = isAutoRefresh ? "Auto-Refresh: ON" : "Auto-Refresh: PAUSED";
+        }
+    </script>
+</body>
+
+</html>
